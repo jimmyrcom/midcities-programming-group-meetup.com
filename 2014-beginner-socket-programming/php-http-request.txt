@@ -1,0 +1,44 @@
+<?
+
+
+/* Get the port for the WWW service. */
+$service_port = 80; //getservbyname('www', 'tcp');
+
+/* Get the IP address for the target host. */
+$address = gethostbyname('www.rosettacode.org');
+
+/* Create a TCP/IP socket. */
+$socket = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
+
+if ($socket === false) {
+  echo "socket_create() failed: reason: " . socket_strerror(socket_last_error()) . "\n";
+} else {
+  echo "OK.\n";
+}
+
+
+$result = socket_connect($socket, $address, $service_port);
+$out='';
+
+$in="GET /wiki/Rosetta_Code HTTP/1.1\r\n";
+$in.="Host: rosettacode.org\r\n";
+$in.="Connection: keep-alive\r\n";
+$in.="Cache-Control: max-age=0\r\n";
+$in.="Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\r\n";
+$in.="User-Agent: Mozilla/5.0 (X11; CrOS armv7l 5116.115.5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.152 Safari/537.36\r\n";
+$in.="DNT: 1\r\n";
+$in.="Accept-Language: en-US,en;q=0.8,es;q=0.6,fr;q=0.4\r\n";
+$in.="Cookie: COUNTRY=USA%2C12.132.253.146; LAST_LANG=en\r\n\r\n";
+
+
+
+socket_write($socket, $in, strlen($in));
+
+echo '<pre>';
+while ($out = socket_read($socket, 2048)) {
+  echo $out;
+}
+
+socket_close($socket);
+
+?>

@@ -1,0 +1,220 @@
+<!--
+Live version
+http://www.jimmyr.com/grid.html
+
+Meetup page
+https://www.meetup.com/Midcities-Programming-Meetup/events/179973912/
+
+
+-->
+<!DOCTYPE html>
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8"></head><body><center><canvas id="myCanvas" width="600" height="600"></canvas></center><script>
+var ctx=document.getElementById("myCanvas").getContext("2d");
+var i, j, k, len;
+var grid_width = 5;
+var grid_height = 5;
+var tile_size=600/grid_height;
+
+// 0 = open, 1 = obstructed, 2= start, 3=end
+var grid=[];
+grid[0] = [0, 0 , 2, 1, 3]; 
+grid[1] = [0, 1 , 1, 1, 0];
+grid[2] = [0, 1 , 0, 0, 0];
+grid[3] = [0, 1 , 0, 1, 0];
+grid[4] = [0, 0 , 0, 1, 0];
+
+function draw(){
+	// Y
+	for (i=0; i<5; i++){
+      // X
+	  for (j=0; j<5; j++){
+		var tile=grid[i][j];
+		if (tile===0) ctx.fillStyle = "rgb(255,255,255)";
+		else if (tile===1) ctx.fillStyle = "rgb(0,0,0)";
+		else if (tile===2) ctx.fillStyle = "rgb(255,255,0)";
+		else if (tile===3) ctx.fillStyle = "rgb(255,0,0)";
+		
+		ctx.fillRect(j*tile_size, i*tile_size, tile_size, tile_size);
+		ctx.rect(    j*tile_size, i*tile_size, tile_size, tile_size);
+		ctx.stroke();
+	  }
+	}
+}
+// g_score is how many steps we've already moved
+// h_score is how far it is from that node
+// f_score is h_score + g_score
+
+function iterate(open_set,closed_set,target,iteration){
+	  var smallest=null;
+	  // get the smallest f_score
+	  for (i=0, len=open_set.length; i<len; i++){
+		var tile = open_set[i];
+		tile.h_score=distance(tile.coordinate, target);
+		tile.g_score=tile.steps;
+		tile.f_score=tile.h_score + tile.g_score;
+		tile.offset = i; // if smallest we need the offset to remove it from open set
+		if (smallest===null || (tile.f_score<smallest.f_score)) smallest = tile;
+	  }
+	  for (i=0; i<5; i++) for(j=0; j<5; j++){
+		if (grid[i][j]===2) grid[i][j]=0;
+	  }
+	  grid[smallest.coordinate[1]][smallest.coordinate[0]]=2;
+	  draw();
+
+	  // Check for success
+	  if (smallest.coordinate[0]===target[0] && smallest.coordinate[1]===target[1])
+		return smallest.path; // YAY
+	  //remove smallest from open set and add to closed_set
+      open_set.splice(smallest.index, 1);
+	  closed_set.push(smallest);
+	  // get smallest's neighbors and add them to open_set, does not check for dupes
+	  var neighbors = get_neighbors(smallest);
+	  var neighbors_filtered=[];
+	  for (i=0, len=neighbors.length; i<len; i++){
+		var kill=false, len1,
+			x=neighbors[i].coordinate[0],
+			y=neighbors[i].coordinate[1];
+		//make sure neighbor is not already in open set
+		for (j=0, len1=open_set.length; j<len1; j++){
+			if (x==open_set[j].coordinate[0] && y==open_set[j].coordinate[1]) kill=true;
+		}
+		// make sure neighbor is not in closed set (we've aready scanned it)
+		for (j=0, len1=closed_set.length; j<len1; j++){
+			if (x==closed_set[j].coordinate[0] && y==closed_set[j].coordinate[1]) kill=true;
+		}
+		if (kill===false) neighbors_filtered.push(neighbors[i]);
+	  }
+	  open_set=open_set.concat(neighbors_filtered);
+	  console.log("iteration: "+iteration++, "smallest: ", smallest, "open_set: ", open_set,  "neighbors_filtered: ", neighbors_filtered);
+	  if (open_set.length > 0) setTimeout(function(){ iterate(open_set,closed_set,target,iteration); },300);
+	  else [];
+} 
+
+function find_path(){
+  var open_set = [{coordinate: [2, 0], steps: 0, path: []}];
+  var closed_set = [];
+  var target = [4,0];
+  var iteration = 0;
+  
+  iterate(open_set,closed_set,target,iteration);
+}
+console.log(find_path());
+
+function distance(start, target){
+	return Math.abs(start[0]-target[0]) + Math.abs(start[1]-target[1]);
+}
+
+function get_neighbors(current){
+	// check current tile's up, down, left, right neighbor. HARYUUUKEN
+	var neighbors = [], x=current.coordinate[0], y=current.coordinate[1]
+		, changes=[[1, 0], [-1, 0], [0, 1], [0, -1]];
+	for (i=0, len=changes.length; i<len; i++){
+			var nx= x+changes[i][0], ny=y+changes[i][1];
+			// if neighbor is inbounds and does not hit a collision
+			if (nx>=0 && nx<grid_width && ny>=0 && ny<grid_height && grid[ny][nx]!==1){
+				var newpath=current.path;
+				newpath.push(current.coordinate);
+				neighbors.push({coordinate: [nx,ny]
+					, steps: current.steps+1
+					, path: newpath});
+			}
+		}
+	return neighbors;
+}
+
+//setInterval(draw,100);
+/*
+
+  push startNode onto openList
+  while(openList is not empty) {
+     currentNode = find lowest f in openList
+     if currentNode is final, return the successful path
+     push currentNode onto closedList and remove from openList
+     foreach neighbor of currentNode {
+         if neighbor is not in openList {
+                save g, h, and f then save the current parent
+                add neighbor to openList
+         }
+         if neighbor is in openList but the current g is better than previous g {
+                 save g and f, then save the current parent
+         }
+     }
+
+[openList add:originalSquare]; // start by adding the original position to the open list
+do {
+	currentSquare = [openList squareWithLowestFScore]; // Get the square with the lowest F score
+ 
+	[closedList add:currentSquare]; // add the current square to the closed list
+	[openList remove:currentSquare]; // remove it to the open list
+ 
+	if ([closedList contains:destinationSquare]) { // if we added the destination to the closed list, we've found a path
+		// PATH FOUND
+		break; // break the loop
+	}
+ 
+	adjacentSquares = [currentSquare walkableAdjacentSquares]; // Retrieve all its walkable adjacent squares
+ 
+	foreach (aSquare in adjacentSquares) {
+ 
+		if ([closedList contains:aSquare]) { // if this adjacent square is already in the closed list ignore it
+			continue; // Go to the next adjacent square
+		}
+ 
+		if (![openList contains:aSquare]) { // if its not in the open list
+ 
+			// compute its score, set the parent
+			[openList add:aSquare]; // and add it to the open list
+ 
+		} else { // if its already in the open list
+ 
+			// test if using the current G score make the aSquare F score lower, if yes update the parent because it means its a better path
+ 
+		}
+	}
+ 
+} while(![openList isEmpty]); // Continue until there is no more available square in the open list (which means there is no path)
+
+
+function A*(start,goal)
+    closedset := the empty set    // The set of nodes already evaluated.
+    openset := {start}    // The set of tentative nodes to be evaluated, initially containing the start node
+    came_from := the empty map    // The map of navigated nodes.
+ 
+    g_score[start] := 0    // Cost from start along best known path.
+    // Estimated total cost from start to goal through y.
+    f_score[start] := g_score[start] + heuristic_cost_estimate(start, goal)
+ 
+    while openset is not empty
+        current := the node in openset having the lowest f_score[] value
+        if current = goal
+            return reconstruct_path(came_from, goal)
+ 
+        remove current from openset
+        add current to closedset
+        for each neighbor in neighbor_nodes(current)
+            if neighbor in closedset
+                continue
+            tentative_g_score := g_score[current] + dist_between(current,neighbor)
+ 
+            if neighbor not in openset or tentative_g_score < g_score[neighbor] 
+                came_from[neighbor] := current
+                g_score[neighbor] := tentative_g_score
+                f_score[neighbor] := g_score[neighbor] + heuristic_cost_estimate(neighbor, goal)
+                if neighbor not in openset
+                    add neighbor to openset
+ 
+    return failure
+ 
+function reconstruct_path(came_from, current_node)
+    if current_node in came_from
+        p := reconstruct_path(came_from, came_from[current_node])
+        return (p + current_node)
+    else
+        return current_node
+		*/
+</script> 
+
+
+
+</body></html>

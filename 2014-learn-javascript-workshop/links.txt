@@ -1,0 +1,24 @@
+http://eloquentjavascript.net/
+http://youmightnotneedjquery.com/
+https://github.com/vhf/free-programming-books/blob/master/free-programming-books.md
+
+Videos
+https://www.destroyallsoftware.com/talks/wat
+https://www.youtube.com/playlist?list=PL62E185BB8577B63D
+https://developers.google.com/youtube/
+
+Where to Learn More
+http://www.meetup.com/Midcities-Programming-Meetup/events/179973912/
+http://www.meetup.com/Midcities-Programming-Meetup/events/173181742/
+https://developer.mozilla.org/en-US/
+https://developer.mozilla.org/en-US/docs/Web/JavaScript
+http://bonsaiden.github.io/JavaScript-Garden/
+http://www.html5rocks.com/en/
+Check your javascript http://www.jslint.com/
+http://kangax.github.io/compat-table/es6/
+http://www.reddit.com/comments/1nnokk
+https://developer.mozilla.org/en-US/docs/Web/JavaScript/A_re-introduction_to_JavaScript
+https://www.destroyallsoftware.com/talks/wat
+https://github.com/jashkenas/coffeescript/wiki/List-of-languages-that-compile-to-JS
+http://jsfiddle.net/
+https://developer.chrome.com/devtools/index

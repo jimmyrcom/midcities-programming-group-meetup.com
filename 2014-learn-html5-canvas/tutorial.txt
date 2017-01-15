@@ -1,0 +1,97 @@
+<!-- 
+
+See the code live
+http://www.jimmyr.com/pewpew.html -
+
+See other's contributions
+https://www.meetup.com/Midcities-Programming-Meetup/events/183692542/
+
+->
+
+
+
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=UTF-8"></head><body style='text-align:center'>
+<strong> Shots Fired: </strong> <span id="shots">0</span><br/>
+<canvas id="myCanvas" width="800" height="600" style='border: 1px dashed #888;'></canvas>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+<script src="http://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
+<script src="http://cdnjs.cloudflare.com/ajax/libs/howler/1.1.17/howler.min.js"></script>
+<script>
+/* This is a plane shooting game. We use a rectangle as our plane and it fires little rectangular bullets
+   that fly at different speeds. The plane can go up and down on keypress and shoot with the spacebar.
+   This uses HTML5 canvas and javascript as well as jquery to interact with keypresses. */
+// set some global variables
+var __plane = {x:50, y:50, size:50}, __bullets = [], __up=false, __down=false, __shoot=false,
+	__shots=0, __canvas=document.getElementById("myCanvas").getContext("2d");
+
+var i, j, k, x, len, len1;  // variables I will recycle over and over
+
+// If we wanted audio we would use this. 
+// __sound = new Howl({  urls: ['pew.mp3', 'pew.ogg', 'pew.wav']}); __sound.play();
+
+// define requestAnimationFrame even if it's using a vendor prefix
+var vendors = ['ms', 'moz', 'webkit', 'o'];
+for(x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
+    window.requestAnimationFrame = window[vendors[x]+'RequestAnimationFrame'];
+    window.cancelAnimationFrame = window[vendors[x]+'CancelAnimationFrame']
+		|| window[vendors[x]+'CancelRequestAnimationFrame'];
+}
+
+// track when the up and down keys have been pressed to know if a key is currently held down
+// we can chain the "on" function because the previous on() will return $(document)
+$(document).on("keydown", function (e){
+		// if up key was pressed down
+		if (e.which === 38)       __up=true;
+		// if down key was pressed down
+		else if (e.which === 40)  __down=true; 
+	}).on("keyup", function (e){
+		// if up or down key was released
+		if (e.which === 38)	      __up=false;
+		else if (e.which === 40)  __down=false; 
+	}).on("keyup", function (e){
+		// if I released the space bar key (shoot a bullet)
+		if (e.which === 32){
+		   var x=++__shots;
+		   $('#shots').fadeOut('fast', function(){ this.innerHTML=x; }).fadeIn('fast');
+		   __shoot=true;
+		 }
+	});
+// Some drawing boilerplate we should give better names to
+function clearScreen(){ drawSquare('rgba(0,0,0,0.25)',0,0,800,600); }
+function clearScreen1(){   __canvas.clearRect(0, 0, 800, 600); __canvas.beginPath(); }
+function drawSquare(color,x,y,width,height){__canvas.fillStyle=color; __canvas.fillRect(x, y, width, height); __canvas.stroke();}
+// Get a random number from min to max inclusive
+function getRandomInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+// call render() at 60 frames per second while window is active
+// if the window is not focused the animation will stop calling this render function over and over
+requestAnimationFrame(render);
+function render(){
+ clearScreen();
+ // draw a square for our plane
+ drawSquare("yellow", __plane.x, __plane.y, __plane.size, __plane.size);
+ // move up and down whenever I hold the up and down keys
+ if (__up) __plane.y-=5;
+ if (__down) __plane.y+=5;
+ // If user pressed spacebar add it to a list of bullets we're tracking
+ if (__shoot){
+	__shoot=false;
+	__bullets.push({x:__plane.x+50, y: __plane.y+25, speed: getRandomInt(4,15)});
+ }
+ // loop through the bullets
+ for (i=0, len=__bullets.length; i<len; i++){
+	// Give the bullet a random color every single frame expressed as #RRGGBB (red, green, blue).	
+	var randomColor="#"+getRandomInt(0,16777215).toString(16);
+	// draw the bullet of size 10x10 with a randomColor
+	//and the x, y coordinates coming the specific bullet in the lust of bullets
+    drawSquare(randomColor, __bullets[i].x, __bullets[i].y + Math.cos(__bullets[i].x)*__bullets[i].speed, 10, 10);
+	// remove bullet if it goes off screen. Whenever we remove an element we must decrease the bullet list length.
+	// and also we must decrease i because all the indexes after what we just deleted get decreased by 1.
+	if (__bullets[i].x>800){ __bullets.splice(i, 1); len--; i--; }
+	// otherwise move bullet further right.
+	else __bullets[i].x+=__bullets[i].speed;
+ }
+ // we need to loop this to continue the animation
+ requestAnimationFrame(render);
+}
+</script>
